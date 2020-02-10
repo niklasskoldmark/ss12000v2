@@ -1,5 +1,6 @@
 Room:
   type: object
+  title: Room
   description: Ett rum eller en plats som kan bokas i ett skolschema.
   properties:
     id:
@@ -17,14 +18,31 @@ Room:
       type: object
       allOf:
         - $ref: "common.yaml#/ObjectReference"
-        - description: Möjlighet att ange vilket organisationselement resursen tillhör.
+        - title: OrganisationReference
+          description: Möjlighet att ange vilket organisationselement resursen tillhör.
   required:
     - id
     - meta
     - displayName
     - owner
 
+RoomsArray:
+        type: array
+        items:
+          $ref: "#/Room"
+
 Rooms:
-  type: array
-  items:
-    $ref: "#/Room"
+  type: object
+  properties:
+      data:
+        type: array
+        items:
+          $ref: "#/Room"
+      pageToken:
+        type: string
+        nullable: true
+        description: >
+          Om värdet är null finns inget mer att hämta på det token
+          som skickades in som query parameter.
+  required:
+    - data

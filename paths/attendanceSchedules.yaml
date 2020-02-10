@@ -1,9 +1,35 @@
-attendances:
+attendanceSchedules:
   get:
     tags:
-      - Närvaro
-    summary: Returnerar registrerad närvaro utifrån en aktivitet eller student.
+      - Vistelseschema
+    summary: Returnerar registrerade vistelsescheman.
     parameters:
+      - name: placement
+        description: Begränsa urvalet till scheman för utpekade placeringar.
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+      - name: startDate.onOrAfter
+        description: >
+          Begränsa urvalet till vistelseschema som är aktiva inom det
+          intervall som startar på angivet datum
+          (RFC 3339-format, t.ex. "2016-10-15"). Inkluderande.
+        in: query
+        schema:
+          type: string
+          format: date
+      - name: endDate.onOrBefore
+        description: >
+          Begränsa urvalet till vistelseschema som är aktiva inom det
+          intervall som avslutas på angivet datum
+          (RFC 3339-format, t.ex. "2016-10-15"). Inkluderande.
+        in: query
+        schema:
+          type: string
+          format: date
       - $ref: "searchParameters.yaml#/SearchCreatedBefore"
       - $ref: "searchParameters.yaml#/SearchCreatedAfter"
       - $ref: "searchParameters.yaml#/SearchModifiedBefore"
@@ -17,23 +43,24 @@ attendances:
         content:
           application/json:
             schema:
-              $ref: "../Attendance.yaml#/Attendances"
+                $ref: "../AttendanceSchedule.yaml#/AttendanceSchedules"
       400:
         description: >
           Filter (ex `sortkey`, `meta.modified.after`, `meta.modified.before`,
-          `meta.created.after`, `meta.created.before`, `expand`).
+          `meta.created.after`, `meta.created.before`, `expand`, `child`, `group`).
           Kan inte kombineras med `pageToken`.
+
 
   post:
     tags:
-      - Närvaro
-    summary: Registrera en ny närvaro post.
+      - Vistelseschema
+    summary: Registrera ett nytt vistelseschema.
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            $ref: "../Attendance.yaml#/Attendance"
+            $ref: "../AttendanceSchedule.yaml#/AttendanceSchedule"
 
     responses:
       "200":
@@ -41,25 +68,23 @@ attendances:
         content:
           application/json:
             schema:
-              $ref: "../Attendance.yaml#/Attendance"
+              $ref: "../AttendanceSchedule.yaml#/AttendanceSchedule"
       default:
         description: unexpected error
         content:
           application/json:
             schema:
-              $ref: "../Attendance.yaml#/Error"
+              $ref: "../AttendanceSchedule.yaml#/Error"
 
-attendancesLookup:
+attendanceSchedulesLookup:
   post:
     tags:
-      - Närvaro
-    summary: >
-      Hämta närvaro baserat på en lista av ID:n eller av Id från aktiviteter
-      eller av Id från elever.
+      - Vistelseschema
+    summary: Hämta många vistelsescheman baserat på en lista av ID:n.
     description: >
-      Istället för att hämta aktiviteter en i taget med en loop
-      av GET-anrop så finns det även möjlighet att hämta många aktiviteter
-      på en gång genom att ange POST:a en lista med önskade aktiviteter.
+      Istället för att hämta vistelsescheman ett i taget med en loop
+      av GET-anrop så finns det även möjlighet att hämta många vistelsescheman
+      på en gång genom att ange POST:a en lista med önskade vistelsescheman.
     parameters:
       - $ref: "searchParameters.yaml#/ExpandReferenceNames"
     responses:
@@ -68,54 +93,37 @@ attendancesLookup:
         content:
           application/json:
             schema:
-              $ref: "../Attendance.yaml#/AttendancesArray"
+              $ref: "../Activity.yaml#/ActivitiesArray"
       503:
         description: The response is too large for the server ie overload
     requestBody:
       content:
         application/json:
           schema:
-              type: object
-              properties:
-                ids:
-                  type: array
-                  items:
-                    type: string
-                    format: uuid
-                activities:
-                  type: array
-                  items:
-                    type: string
-                    format: uuid
-                students:
-                  type: array
-                  items:
-                    type: string
-                    format: uuid
+            $ref : "../common.yaml#/components/schemas/IdLookup"
       required: true
 
-attendanceById:
+attendanceSchedulesById:
   get:
     tags:
-      - Närvaro
-    summary: Hämta en närvaro post utifrån ID.
+        - Vistelseschema
+    summary: Hämta ett vistelseschema utifrån ID.
     parameters:
       - name: id
-        description: Hämta en Attendance post.
+        description: Id för vistelseschema att hämta.
         in: path
         required: true
         schema:
           type: string
           format: uuid
+      - $ref: "searchParameters.yaml#/ExpandReferenceNames"
     responses:
       "200":
         description: Posten returneras.
         content:
           application/json:
             schema:
-              $ref: "../Attendance.yaml#/Attendance"
-      "204":
-        description: Posten borttagen.
+              $ref: "../AttendanceSchedule.yaml#/AttendanceSchedule"
       "400":
         description: Felaktigt id.
       "403":
@@ -127,15 +135,15 @@ attendanceById:
         content:
           application/json:
             schema:
-              $ref: "../Attendance.yaml#/Error"
+              $ref: "../AttendanceSchedule.yaml#/Error"
   delete:
     tags:
-      - Närvaro
-    summary: Ta bort en närvaro post.
+        - Vistelseschema
+    summary: Ta bort ett vistelseschema.
     parameters:
       - name: id
         in: path
-        description: ID för närvaro posten som ska tas bort.
+        description: ID för vistelseschema som ska tas bort.
         required: true
         schema:
           type: string

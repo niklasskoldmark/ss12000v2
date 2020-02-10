@@ -4,13 +4,6 @@ grades:
       - Betyg
     summary: Hämta en lista med betyg.
     parameters:
-      - name: id
-        description: Begränsa urvalet till utpekade betygs-ID:n.
-        in: query
-        schema:
-          type: array
-          items:
-            type: string
       - name: schoolUnit
         description: Begränsa urvalet till de betyg som är kopplade till skolenhet.
         in: query
@@ -36,13 +29,17 @@ grades:
           type: string
           format: uuid
       - name: registeredDate.onOrAfter
-        description: Begränsa urvalet av betyg till de som är registerade inom det intervall som startar på angivet datum.
+        description: >
+          Begränsa urvalet av betyg till de som är registerade inom det intervall
+          som startar på angivet datum (RFC 3339-format, t.ex. "2016-10-15"). Inkluderande.
         in: query
         schema:
           type: string
           format: date
       - name: registeredDate.onOrBefore
-        description: Begränsa urvalet av betyg till de som är registerade inom det intervall som slutar på angivet datum.
+        description: >
+          Begränsa urvalet av betyg till de som är registerade inom det intervall
+          som slutar på angivet datum (RFC 3339-format, t.ex. "2016-10-15"). Inkluderande.
         in: query
         schema:
           type: string
@@ -51,37 +48,59 @@ grades:
       - $ref: "searchParameters.yaml#/SearchCreatedAfter"
       - $ref: "searchParameters.yaml#/SearchModifiedBefore"
       - $ref: "searchParameters.yaml#/SearchModifiedAfter"
-      - $ref: "searchParameters.yaml#/Offset"
+      - $ref: "searchParameters.yaml#/ExpandReferenceNames"
+      - name: sortkey
+        description: Anger hur resultatet ska sorteras.
+        in: query
+        schema:
+          type: string
+          enum:
+            - registeredDateAsc
+            - registeredDateDesc
+            - ModifiedDesc
+          default: ModifiedDesc
+
       - $ref: "searchParameters.yaml#/Limit"
+      - $ref: "searchParameters.yaml#/PageToken"
     responses:
-      "200":
+      200:
         description: successful operation
         content:
           application/json:
             schema:
               $ref: "../Grade.yaml#/Grades"
-gradesFilter:
+      400:
+        description: >
+          Filter (ex `sortkey`, `meta.modified.after`, `meta.modified.before`,
+          `meta.created.after`, `meta.created.before`, `expand`, `schoolUnit`,
+          `student`, `registeredBy`,`gradingTeacher`,`registeredDate.onOrAfter`,
+          `registeredDate.onOrBefore`). Kan inte kombineras med `pageToken`.
+
+gradesLookup:
   post:
     tags:
       - Betyg
     summary: Hämta många betyg baserat på en lista av ID:n.
     description: >
-      Hämta många betyg.
+      Istället för att hämta betyg ett i taget med en loop a GET-anrop
+      så finns det även möjlighet att hämta många betyg på en gång genom
+      att ange POST:a en lista med önskade objekt.
+    parameters:
+      - $ref: "searchParameters.yaml#/ExpandReferenceNames"
     responses:
-      "200":
+      200:
         description: successful operation
         content:
           application/json:
             schema:
-              $ref: "../Grade.yaml#/Grade"
+              $ref: "../Grade.yaml#/GradesArray"
+      503:
+        description: The response is too large for the server ie overload
     requestBody:
       content:
         application/json:
           schema:
-            type: array
-            items:
-              type: string
-              format: uuid
+            $ref: "../common.yaml#/components/schemas/IdLookup"
       required: true
 
 gradeById:
@@ -96,6 +115,8 @@ gradeById:
         required: true
         schema:
           type: string
+          format: uuid
+      - $ref: "searchParameters.yaml#/ExpandReferenceNames"
     responses:
       "200":
         description: successful operation

@@ -31,20 +31,23 @@ Grade:
     registeredDate:
       type: string
       format: date
-      description: Det datum då betyget registrerades.
+      description: Det datum då betyget registrerades (RFC 3339-format, t.ex. "2016-10-15").
     gradeValue:
       type: string
       description: Anger vilket betyg eleven har tilldelats.
     finalGrade:
       type: boolean
-      description: Anger om det registrerade betyget är ett slutbetyg för ämnet eller kursen.
+      description: >
+        Anger om det registrerade betyget är ett slutbetyg för ämnet eller kursen.
     trial:
       type: boolean
       default: false
       description: Anger om betyget satts vid en prövning. Förvalt värde är "false".
     adaptedStudyPlan:
       type: string
-      description: Om en specialinriktad ämnesplan (GY) eller anpassad studiegång (GR) har använts för kursen så beskrivs här på vilket sätt studiegången anpassats.
+      description: >
+        Om en specialinriktad ämnesplan (GY) eller anpassad studiegång (GR)
+        har använts för kursen så beskrivs här på vilket sätt studiegången anpassats.
     remark:
       type: string
       description: Andra anmärkningar för betygsraden.
@@ -55,12 +58,14 @@ Grade:
     correctionType:
       type: string
       description: Ändringstyp för betyget, om det är ändrat.
+      title: Code_GradeCorrectionType
       enum:
         - Ändring
         - Rättelse
     semester:
       type: string
       description: Om betyget avser höst- eller vårtermin.
+      title: Code_Semester
       enum:
         - HT
         - VT
@@ -99,8 +104,24 @@ Grade:
     - finalGrade
     - adaptedStudyPlan
 
-        
+GradesArray:
+    type: array
+    items:
+      $ref: "#/Grade"
+
+
 Grades:
-  type: array
-  items:
-    $ref: "#/Grade"
+ type: object
+ properties:
+      data:
+        type: array
+        items:
+          $ref: "#/Grade"
+      pageToken:
+        type: string
+        nullable: true
+        description: >
+          Om värdet är null finns inget mer att hämta på det token
+          som skickades in som query parameter.
+ required:
+    - data

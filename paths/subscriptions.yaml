@@ -2,10 +2,12 @@ subscriptions:
   get:
     tags:
       - Prenumeration
-      - Verktyg
     summary: Hämta en lista av prenumerationer.
+    parameters:
+      - $ref: "searchParameters.yaml#/Limit"
+      - $ref: "searchParameters.yaml#/PageToken"
     responses:
-      "200":
+      200:
         description: successful operation
         content:
           application/json:
@@ -15,7 +17,6 @@ subscriptions:
   post:
     tags:
       - Prenumeration
-      - Verktyg
     summary: Skapa en prenumeration
     requestBody:
       required: true
@@ -26,24 +27,15 @@ subscriptions:
             example:
               name: Nya
               target: https://pastebin/788
-              secret: hemligt
-              authType: basic
-              events:
-                - NewOrUpdate
-              authCredentials:
-                name: vemsomhelst
-                password: qwerty
-
+              resourceTypes:
+                - Organsation
+                - SchoolUnit
+                - Person
+                - Duty
     callbacks:
-      newOrUpdate: # Event name
+      subscriptionEvent: # Event name
         "{$request.body#/target}": # The callback URL, Refers to the passed URL
           post:
-            parameters:
-              - in: header
-                name: x-hmac-signature
-                schema:
-                  type: string
-                  description: sha1 hmac digest of responseBody (sha1=digest)
             requestBody: # Contents of the callback message
               required: true
               content:
@@ -51,23 +43,18 @@ subscriptions:
                   schema:
                     type: object
                     properties:
-                      action:
-                        type: string
-                        enum:
-                          - NewOrUpdate
-                          - Deleted
-
-                      list:
+                      modifiedEntites:
                         type: array
                         items:
-                          type: object
-                          properties:
-                            resource:
-                              $ref: "../common.yaml#/components/schemas/EndPointsEnum"
-                            id:
-                              type: array
-                              items:
-                                type: string
+                          $ref: "../common.yaml#/components/schemas/EndPointsEnum"
+                        description: >
+                          En lista med datatyper där det finns uppdaterad eller ny information att hämta
+                          på respektive ändpunkt.
+                      deletedEntities:
+                        type: boolean
+                        description: >
+                          True indikerar att det finns information om borttagna entiteter
+                          att hämta från ändpunkten `deletedEntitites`.
 
             responses: # Expected responses to the callback message
               "200":
@@ -91,7 +78,6 @@ subscription_by_id:
   delete:
     tags:
       - Prenumeration
-      - Verktyg
     summary: Ta bort en prenumeration
     parameters:
       - name: id
@@ -100,6 +86,7 @@ subscription_by_id:
         required: true
         schema:
           type: string
+          format: uuid
     responses:
       "204":
         description: Prenumeration borttagen.
@@ -111,9 +98,8 @@ subscription_by_id:
         description: Prenumeration not found
   get:
     tags:
-      - Subscription
-      - Verktyg
-    summary: Hämta program baserat på  ID
+      - Prenumeration
+    summary: Hämta prenumeration baserat på ID
     parameters:
       - name: id
         in: path
@@ -121,6 +107,32 @@ subscription_by_id:
         required: true
         schema:
           type: string
+          format: uuid
+    responses:
+      "200":
+        description: successful operation
+        content:
+          application/json:
+            schema:
+              $ref: "../Subscription.yaml#/Subscription"
+      "400":
+        description: Invalid id supplied
+      "403":
+        description: Not authorised
+      "404":
+        description: Prenumeration not found
+  patch:
+    tags:
+      - Prenumeration
+    summary: Uppdatera expire time på prenumerationen baserat på ID
+    parameters:
+      - name: id
+        in: path
+        description: ID för prenumerationen som ska uppdateras
+        required: true
+        schema:
+          type: string
+          format: uuid
     responses:
       "200":
         description: successful operation

@@ -4,26 +4,6 @@ persons:
       - Person
     summary: Hämta en lista med personer.
     parameters:
-      - name: id
-        description: Begränsa urvalet till utpekade person-ID:n.
-        in: query
-        schema:
-          type: array
-          items:
-            type: string
-      - name: norEduPersonNIN
-        description: Begränsa urvalet till utpekade personnummer.
-        in: query
-        schema:
-          type: array
-          items:
-            type: string
-      - $ref: "searchParameters.yaml#/SearchCreatedBefore"
-      - $ref: "searchParameters.yaml#/SearchCreatedAfter"
-      - $ref: "searchParameters.yaml#/SearchModifiedBefore"
-      - $ref: "searchParameters.yaml#/SearchModifiedAfter"
-      - $ref: "searchParameters.yaml#/Offset"
-      - $ref: "searchParameters.yaml#/Limit"
       - name: enrolment.schoolUnit
         description: >
           Begränsa urvalet till de elever som har en inskrivning (enrolment) på angiven
@@ -36,7 +16,9 @@ persons:
       - name: enrolment.startDate.onOrAfter
         description: >
           Begränsa urvalet av personer till de som har
-          inskrivningar som är aktiva inom det intervall som startar på angivet datum.
+          inskrivningar som är aktiva inom det intervall
+          som startar på angivet datum (RFC 3339-format,
+          t.ex. "2016-10-15"). Inkluderande.
         in: query
         schema:
           type: string
@@ -44,7 +26,9 @@ persons:
       - name: enrolment.endDate.onOrBefore
         description: >
           Begränsa urvalet av personer till de som har
-          inskrivningar som är aktiva inom det intervall som avslutas på angivet datum.
+          inskrivningar som är aktiva inom det intervall
+          som avslutas på angivet datum (RFC 3339-format,
+          t.ex. "2016-10-15"). Inkluderande.
         in: query
         schema:
           type: string
@@ -62,7 +46,9 @@ persons:
       - name: placement.startDate.onOrAfter
         description: >
           Begränsa urvalet av personer till de som har
-          placeringar som är aktiva inom det intervall som startar på angivet datum.
+          placeringar som är aktiva inom det intervall
+          som startar på angivet datum (RFC 3339-format,
+          t.ex. "2016-10-15"). Inkluderande.
         in: query
         schema:
           type: string
@@ -70,55 +56,102 @@ persons:
       - name: placement.endDate.onOrBefore
         description: >
           Begränsa urvalet av personer till de som har
-          placeringar som är aktiva inom det intervall som avslutas på angivet datum.
+          placeringar som är aktiva inom det intervall
+          som avslutas på angivet datum (RFC 3339-format,
+          t.ex. "2016-10-15"). Inkluderande.
         in: query
         schema:
           type: string
           format: date
       - name: dutySchoolUnit
-        description: Begränsa urvalet till de tjänstgöringar som är kopplade till en skolenhet.
+        description: >
+          Begränsa urvalet till de tjänstgöringar som är kopplade till en skolenhet.
         in: query
         schema:
           type: string
           format: uuid
-      - name: expand
-        description: Beskriver om expanderade data ska hämtas
+      - $ref: "searchParameters.yaml#/SearchCreatedBefore"
+      - $ref: "searchParameters.yaml#/SearchCreatedAfter"
+      - $ref: "searchParameters.yaml#/SearchModifiedBefore"
+      - $ref: "searchParameters.yaml#/SearchModifiedAfter"
+      - $ref: "#/ExpandParameter"
+      - $ref: "searchParameters.yaml#/ExpandReferenceNames"
+      - name: sortkey
+        description: Anger hur resultatet ska sorteras.
         in: query
         schema:
-          type: array
-          items:
-            type: string
-            enum: [duties, children]
+          type: string
+          enum:
+            - DisplayNameAsc
+            - GivenNameDesc
+            - GivenNameAsc
+            - FamilyNameDesc
+            - FamilyNameAsc
+            - NorEduPersonNIN
+            - ModifiedDesc
+          default: ModifiedDesc
+      - $ref: "searchParameters.yaml#/Limit"
+      - $ref: "searchParameters.yaml#/PageToken"
     responses:
-      "200":
+      200:
         description: successful operation
         content:
           application/json:
             schema:
               $ref: "../Person.yaml#/PersonsExpanded"
+      400:
+        description: >
+          Filter (ex `sortkey`, `meta.modified.after`, `meta.modified.before`,
+          `meta.created.after`, `meta.created.before`, `enrolment.schoolUnit`,
+          `enrolment.startDate.onOrAfter`, `enrolment.endDate.onOrBefore`,
+          `placement.schoolUnit`, `placement.startDate.onOrAfter`,
+          `placement.endDate.onOrBefore`,`dutySchoolUnit`, `expand`).
+          Kan inte kombineras med `pageToken`.
 
-personsFilter:
+personsLookup:
   post:
     tags:
       - Person
-    summary: Hämta många personer baserat på en lista av ID:n.
+    summary: Hämta många personer baserat på en lista av ID:n eller personnummer.
     description: >
-      Hämta många personer.
+      Istället för att hämta personer en i taget med en loop
+      av GET-anrop så finns det även möjlighet att hämta många personer
+      på en gång genom att ange POST:a en lista med önskade personer.
+    parameters:
+      - $ref: "#/ExpandParameter"
+      - $ref: "searchParameters.yaml#/ExpandReferenceNames"
     responses:
-      "200":
+      200:
         description: successful operation
         content:
           application/json:
             schema:
-              $ref: "../Person.yaml#/PersonsExpanded"
+              $ref: "../Person.yaml#/PersonsExpandedArray"
+      503:
+        description: The response is too large for the server ie overload
     requestBody:
+      description: >
+        En lista med personnummer och / eller uuid:n på personer.
       content:
         application/json:
           schema:
-            type: array
-            items:
-              type: string
-              format: uuid
+            type: object
+            properties:
+              ids:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+              norEduPersonNINs:
+                type: array
+                items:
+                  type: string
+                  pattern: '^\d{8}[A-Z0-9]{2}\d{2}$'
+            example:
+              ids:
+                - d544563a-747a-42d3-8d37-415a101537fa
+              norEduPersonNINs:
+                - "201002037271"
       required: true
 
 personsById:
@@ -133,6 +166,9 @@ personsById:
         required: true
         schema:
           type: string
+          format: uuid
+      - $ref: "#/ExpandParameter"
+      - $ref: "searchParameters.yaml#/ExpandReferenceNames"
     responses:
       "200":
         description: successful operation
@@ -146,3 +182,13 @@ personsById:
         description: Not authorised
       "404":
         description: Person not found
+
+ExpandParameter:
+  name: expand
+  description: Beskriver om expanderade data ska hämtas
+  in: query
+  schema:
+    type: array
+    items:
+      type: string
+      enum: [duties, responsibleFor, placements, ownedPlacements, studentGroups]

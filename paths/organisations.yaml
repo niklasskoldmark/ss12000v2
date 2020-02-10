@@ -4,13 +4,6 @@ organisations:
       - Organisation
     summary: Hämta en lista med organisationer.
     parameters:
-      - name: id
-        description: Begränsa urvalet till utpekade organisations-ID:n.
-        in: query
-        schema:
-          type: array
-          items:
-            type: string
       - name: parent
         description: Begränsa urvalet till utpekade organisations-ID:n.
         in: query
@@ -18,16 +11,9 @@ organisations:
           type: array
           items:
             type: string
+            format: uuid
       - name: type
         description: Begränsa urvalet till utpekade typ.
-        in: query
-        schema:
-          type: array
-          items:
-            type: string
-      - name: expand
-        description: >
-          Expandera underliggande organisationselement och skolenheter.
         in: query
         schema:
           type: array
@@ -37,52 +23,64 @@ organisations:
       - $ref: "searchParameters.yaml#/SearchCreatedAfter"
       - $ref: "searchParameters.yaml#/SearchModifiedBefore"
       - $ref: "searchParameters.yaml#/SearchModifiedAfter"
-      - $ref: "searchParameters.yaml#/Offset"
+      - $ref: "searchParameters.yaml#/ExpandReferenceNames"
+      - $ref: "searchParameters.yaml#/Sortkey"
       - $ref: "searchParameters.yaml#/Limit"
+      - $ref: "searchParameters.yaml#/PageToken"
     responses:
-      "200":
+      200:
         description: successful operation
         content:
           application/json:
             schema:
-              $ref: "../Organisation.yaml#/Organisation"
+              $ref: "../Organisation.yaml#/Organisations"
+      400:
+       description: >
+        Filter (ex `sortkey`, `meta.modified.after`, `meta.modified.before`,
+        `meta.created.after`, `meta.created.before`, `expand`, `parent`, `type`).
+        Kan inte kombineras med `pageToken`.
 
-organisationsFilter:
+organisationsLookup:
   post:
     tags:
       - Organisation
     summary: Hämta många organisationer baserat på en lista av ID:n.
     description: >
-      Hämta många program.
+      Istället för att hämta organisationer en i taget med en loop
+      av GET-anrop så finns det även möjlighet att hämta många organisationer
+      på en gång genom att ange POST:a en lista med önskade organisationer.
+    parameters:
+      - $ref: "searchParameters.yaml#/ExpandReferenceNames"
     responses:
-      "200":
+      200:
         description: successful operation
         content:
           application/json:
             schema:
-              $ref: "../Organisation.yaml#/Organisation"
+              $ref: "../Organisation.yaml#/OrganisationsArray"
+      503:
+        description: The response is too large for the server ie overload
     requestBody:
       content:
         application/json:
-          schema:
-            type: array
-            items:
-              type: string
-              format: uuid
+         schema:
+            $ref : "../common.yaml#/components/schemas/IdLookup"
       required: true
 
 organisationById:
   get:
     tags:
       - Organisation
-    summary: Hämta en resurs baserat på ID
+    summary: Hämta en organisation baserat på ID
     parameters:
       - name: id
         in: path
-        description: ID för resursen som ska hämtas
+        description: ID för organisationen som ska hämtas
         required: true
         schema:
           type: string
+          format: uuid
+      - $ref: "searchParameters.yaml#/ExpandReferenceNames"
     responses:
       "200":
         description: successful operation

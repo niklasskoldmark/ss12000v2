@@ -1,51 +1,46 @@
 get:
   tags:
     - Närvaro
-  summary: Returnerar summerad närvaro information utifrån angivet tidsintervall.
+  summary: >
+    Returnerar summerad närvaro information utifrån angivet tidsintervall.
   parameters:
     - name: startDate
-      description: Hämta aggregerad närvaro från och med detta datum (ISO8601 format, e.g. "2016-10-15")
+      description: >
+        Hämta aggregerad närvaro från och med detta datum
+        (RFC 3339-format, e.g. "2016-10-15")
       in: query
       required: true
       schema:
         type: string
-        format: date-time
+        format: date
     - name: endDate
-      description: Hämta aggregerad närvaro till och med detta datum (ISO8601 format, e.g. "2016-10-15")
+      description: >
+        Hämta aggregerad närvaro till och med detta datum
+        (RFC 3339-format, e.g. "2016-10-15")
       in: query
       required: true
       schema:
         type: string
-        format: date-time
+        format: date
     - name: schoolUnit
-      description: Inkludera endast närvaro från aktiviteter vilka ägs av information kopplad till aktiviteten (Owner, eller inskrivningen??? eller något annat???)
+      description: >
+        Inkludera endast närvaro från aktiviteter vilka ägs av angiven
+        skolenhet.
       in: query
       schema:
         type: string
         format: uuid
-    - name: schoolForm
-      description: Hämta endast närvaro informtion från aktiviteter vilka är kopplade mot angiven skolvform
+    - name: schoolType
+      description: >
+        Hämta endast närvaro information från aktiviteter
+        vilka är kopplade mot angiven skolform.
       in: query
       schema:
-        type: string
-        enum: 
-          - FS
-          - FSK
-          - FTH
-          - GR
-          - GRS
-          - SP
-          - SAM
-          - GY
-          - GYS
-          - VUX
-          - SUV
-          - YH
-          - FHS
-          - HS
-          - AU
+        type: array
+        items:
+          $ref: "../common.yaml#/components/schemas/SchoolTypesEnum"
     - name: student
-      description: Filtrera på elev (person)
+      description: Filtrera på elev (person).
       in: query
       schema:
         type: array
@@ -53,21 +48,29 @@ get:
           type: string
           format: uuid
     - name: expand
-      description: Beskriver om och vilken expanderade data som returneras i samband med närvaro informationen
+      description: >
+        Beskriver om och vilken expanderade data som returneras i samband med
+        närvaroinformationen.
       in: query
       schema:
         type: array
         items:
           type: string
           enum: [ activity, student ]
-    - $ref: "searchParameters.yaml#/Offset"
+    - $ref: "searchParameters.yaml#/ExpandReferenceNames"
     - $ref: "searchParameters.yaml#/Limit"
+    - $ref: "searchParameters.yaml#/PageToken"
+
   responses:
-    "200":
+    200:
       description: successful operation
       content:
         application/json:
           schema:
-            type: array
-            items:
-              $ref: "../AggregatedAttendance.yaml#/AggregatedAttendance"
+              $ref: "../AggregatedAttendance.yaml#/AggregatedAttendances"
+    400:
+        description: >
+          Filter (ex `sortkey`, `meta.modified.after`, `meta.modified.before`,
+          `meta.created.after`, `meta.created.before`, `expand`, `startDate`,
+          `endDate`,`schoolUnit`,`schoolType`, `student`).
+          Kan inte kombineras med `pageToken`.

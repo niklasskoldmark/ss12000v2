@@ -1,5 +1,6 @@
 SchoolUnit:
   type: object
+  title: SchoolUnit
   description: >
     En Skolenhet, i förekommande fall med skolenhetskod
     enligt Skolenhetsregistret.
@@ -13,7 +14,8 @@ SchoolUnit:
     organisation:
       allOf:
         - $ref: "common.yaml#/ObjectReference"
-        - description: Organisationstillhörighet.
+        - title: OrganisationReference
+          description: Organisationstillhörighet.
     displayName:
       type: string
       description: Namn för skolenheten.
@@ -28,23 +30,7 @@ SchoolUnit:
       uniqueItems: true
       minItems: 1
       items:
-        type: string
-        enum:
-          - FS
-          - FSK
-          - FTH
-          - GR
-          - GRS
-          - SP
-          - SAM
-          - GY
-          - GYS
-          - VUX
-          - SUV
-          - YH
-          - FHS
-          - HS
-          - AU
+        $ref: "common.yaml#/components/schemas/SchoolTypesEnum"
     municipalityCode:
       type: string
       description: >
@@ -54,14 +40,14 @@ SchoolUnit:
       type: string
       format: date
       description: >
-        Startdatum för skolenhetens giltighetstid,
-        från och med (ISO8601 format, e.g. "1976-01-01")
+        Startdatum för skolenhetens giltighetstid
+        (RFC 3339-format, t.ex. "2016-10-15"). Inkluderande.
     endDate:
       type: string
       format: date
       description: >
-        Slutdatum för skolenhetens giltighetstid,
-        från och med (ISO8601 format, e.g. "2016-10-15")
+        Slutdatum för skolenhetens giltighetstid
+        (RFC 3339-format, t.ex. "2016-10-15"). Inkluderande.
   required:
     - id
     - meta
@@ -69,7 +55,23 @@ SchoolUnit:
     - displayName
     - schoolTypes
 
+SchoolUnitsArray:
+        type: array
+        items:
+          $ref: "#/SchoolUnit"
+
 SchoolUnits:
-  type: array
-  items:
-    $ref: "#/SchoolUnit"
+ type: object
+ properties:
+      data:
+        type: array
+        items:
+          $ref: "#/SchoolUnit"
+      pageToken:
+        type: string
+        nullable: true
+        description: >
+          Om värdet är null finns inget mer att hämta på det token
+          som skickades in som query parameter.
+ required:
+    - data

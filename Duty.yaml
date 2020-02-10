@@ -1,24 +1,74 @@
 DutyFragment:
+  type: object
+  title: Duty
   description: referens till ett Dutyobjekt
   properties:
     id:
       type: string
       format: uuid
       description: Ett ID för tjänsten.
+    assignmentRoleStudentGroups:
+      type: array
+      items:
+        type: object
+        properties:
+          studentGroup:
+            $ref: "common.yaml#/StudentGroupReference"
+          assignmentRoleType:
+            $ref: "common.yaml#/components/schemas/AssignmentRoleTypeEnum"
+          startDate:
+            description: >
+              Startdatum för tjänstens relation till gruppen
+              (RFC 3339-format, t.ex. "2016-10-15"). Inkluderande.
+            type: string
+            format: date
+          endDate:
+            description: >
+              Slutdatum för tjänstens relation till gruppen
+              (RFC 3339-format, t.ex. "2016-10-15"). Inkluderande.
+            type: string
+            format: date
+        required:
+          - studentGroup
+          - assignmentRoleType
+          - startDate
+    assignmentRoleSchoolUnits:
+      type: array
+      items:
+        type: object
+        properties:
+          schoolUnit:
+            $ref: "common.yaml#/SchoolUnitReference"
+          assignmentRoleType:
+            $ref: "common.yaml#/components/schemas/AssignmentRoleTypeEnum"
+          startDate:
+            description: >
+              Startdatum för tjänstens relation till skolenheten
+              (RFC 3339-format, t.ex. "2016-10-15"). Inkluderande.
+            type: string
+            format: date
+          endDate:
+            description: >
+              Slutdatum för tjänstens relation till skolenheten
+              (RFC 3339-format, t.ex. "2016-10-15"). Inkluderande.
+            type: string
+            format: date
+        required:
+          - studentGroup
+          - assignmentRoleType
+          - startDate
+
     dutyAt:
       allOf:
         - $ref: "common.yaml#/ObjectReference"
-        - description: Identifierare av skolenhet som tjänsten är knuten till.
+        - description: >
+            Identifierare av skolenhet som tjänsten är knuten till.
     dutyRole:
-      type: string
-      enum:
-        - Rektor
-        - Lärare
-        - Förskollärare
-        - Övrig pedagogisk personal
-        - Förskolechef
-        - Annan personal
-      description: Syfte med tjänsten, den roll tjänsen avser, till exempel lärare eller rektor.
+      allOf:
+        - $ref: "common.yaml#/components/schemas/DutyRole"
+        - description: >
+            Syfte med tjänsten, den roll tjänsen avser,
+            till exempel lärare eller rektor.
     signature:
       type: string
       description: En signatur för tjänstgöringen exempelvis NJN, JOAN.
@@ -31,11 +81,15 @@ DutyFragment:
     startDate:
       type: string
       format: date
-      description: Startdatum för personens anställning på en viss skolenhet eller skola (ISO8601 format, t.ex. "2016-10-15")
+      description: >
+        Startdatum för personens anställning på en viss skolenhet eller skola
+        (RFC 3339-format, t.ex. "2016-10-15"). Inkluderande.
     endDate:
       type: string
       format: date
-      description: Slutdatum för personens anställning på en viss skolenhet eller skola (ISO8601 format, e.g. "2016-10-15").
+      description: >
+        Slutdatum för personens anställning på en viss skolenhet eller skola
+        (RFC 3339-format, e.g. "2016-10-15"). Inkluderande.
   required:
     - id
     - dutyAt
@@ -54,7 +108,23 @@ Duty:
             - $ref: "common.yaml#/PersonReference"
             - description: Identifierare av person som tjänsten är knuten till.
 
-Duties:
+DutiesArray:
   type: array
   items:
     $ref: "#/Duty"
+
+Duties:
+  type: object
+  properties:
+    data:
+      type: array
+      items:
+        $ref: "#/Duty"
+    pageToken:
+      type: string
+      nullable: true
+      description: >
+        Om värdet är null finns inget mer att hämta på det token
+        som skickades in som query parameter.
+  required:
+    - data

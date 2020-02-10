@@ -2,76 +2,76 @@ activities:
   get:
     tags:
       - Aktiviteter
-    summary: Hämta en lista med aktiviteter.
+    summary: Hämta en lista med aktiviteter baserat på ett antal sökparametrar.
     parameters:
-      - name: id
-        description: Begränsa urvalet till utpekade aktivitets-ID:n.
-        in: query
-        schema:
-          type: array
-          items:
-            type: string
       - name: person
         description: Begränsa urvalet till utpekad persons ID.
         in: query
         schema:
           type: string
+          format: uuid
       - name: schoolUnit
         description: Begränsa urvalet till utpekad skolenhets ID.
         in: query
         schema:
           type: string
-      - name: expand
-        description: Beskriver om expanderade data ska hämtas
-        in: query
-        schema:
-          type: array
-          items:
-            type: string
-            enum: [studentGroups]
+          format: uuid
+
       - $ref: "searchParameters.yaml#/SearchCreatedBefore"
       - $ref: "searchParameters.yaml#/SearchCreatedAfter"
       - $ref: "searchParameters.yaml#/SearchModifiedBefore"
       - $ref: "searchParameters.yaml#/SearchModifiedAfter"
-      - $ref: "searchParameters.yaml#/Offset"
+      - $ref: "#/ExpandParameter"
+      - $ref: "searchParameters.yaml#/ExpandReferenceNames"
+      - $ref: "searchParameters.yaml#/Sortkey"
       - $ref: "searchParameters.yaml#/Limit"
+      - $ref: "searchParameters.yaml#/PageToken"
     responses:
-      "200":
+      200:
         description: successful operation
         content:
           application/json:
             schema:
               $ref: "../Activity.yaml#/Activities"
+      400:
+        description: >
+          Filter (ex `sortkey`, `meta.modified.after`, `meta.modified.before`,
+          `meta.created.after`, `meta.created.before`, `expand`, `person`,
+          `schoolUnit`) kan inte kombineras med `pageToken`.
 
-activitiesFilter:
+activitiesLookup:
   post:
     tags:
       - Aktiviteter
-    summary: Hämta många aktiviteter baserat på en lista av ID:n.
+    summary: Hämta en lista med aktiviteter baserat på motsvarande lista av ID:n.
     description: >
-      Hämta många aktiviteter.
+      Istället för att hämta aktiviteter en i taget med en loop
+      av GET-anrop så finns det även möjlighet att hämta många aktiviteter
+      på en gång genom att ange POST:a en lista med önskade aktiviteter.
+    parameters:
+      - $ref: "#/ExpandParameter"
+      - $ref: "searchParameters.yaml#/ExpandReferenceNames"
     responses:
-      "200":
+      200:
         description: successful operation
         content:
           application/json:
             schema:
-              $ref: "../Activity.yaml#/Activities"
+              $ref: "../Activity.yaml#/ActivitiesArray"
+      503:
+        description: The response is too large for the server, i.e. overload
     requestBody:
       content:
         application/json:
           schema:
-            type: array
-            items:
-              type: string
-              format: uuid
+            $ref : "../common.yaml#/components/schemas/IdLookup"
       required: true
 
 activityById:
   get:
     tags:
       - Aktiviteter
-    summary: Hämta aktivitet baserat på ID
+    summary: Hämta en aktivitet baserat på dess ID
     parameters:
       - name: id
         in: path
@@ -79,6 +79,9 @@ activityById:
         required: true
         schema:
           type: string
+          format: uuid
+      - $ref: "#/ExpandParameter"
+      - $ref: "searchParameters.yaml#/ExpandReferenceNames"
     responses:
       "200":
         description: successful operation
@@ -92,3 +95,13 @@ activityById:
         description: Not authorised
       "404":
         description: Activity not found
+
+ExpandParameter:
+  name: expand
+  description: Beskriver om expanderade data ska hämtas
+  in: query
+  schema:
+    type: array
+    items:
+      type: string
+      enum: [studentGroups]

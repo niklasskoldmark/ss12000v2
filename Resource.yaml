@@ -1,5 +1,6 @@
 Resource:
   type: object
+  title: Resource
   properties:
     id:
       type: string
@@ -15,7 +16,8 @@ Resource:
     owner:
       allOf:
         - $ref: "common.yaml#/ObjectReference"
-        - description: >
+        - title: OrganisationReference
+          description: >
             Möjlighet att ange vilket organisationselement resursen tillhör.
   required:
     - id
@@ -23,7 +25,24 @@ Resource:
     - displayName
     - owner
 
+
+ResourcesArray:
+      type: array
+      items:
+        $ref: "#/Resource"
+
 Resources:
-  type: array
-  items:
-    $ref: "#/Resource"
+  type: object
+  properties:
+      data:
+        type: array
+        items:
+          $ref: "#/Resource"
+      pageToken:
+        type: string
+        nullable: true
+        description: >
+          Om värdet är null finns inget mer att hämta på det token
+          som skickades in som query parameter.
+  required:
+    - data

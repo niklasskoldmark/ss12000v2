@@ -43,19 +43,24 @@ Person:
           uniqueItems: true
           items:
             type: object
+            title: EduPersonPrincipalName
             properties:
               value:
                 type: string
-                description: eduPersonPrincipalName
+                description: Identifierare för användaren.
                 format: email
               type:
                 type: string
+                description: >
+                  Anger för vilket syfte användaridentifieraren har skapats,
+                  kan ange en roll eller ett utpekat system.
+                title: Code_EduPersonPrincipalType
                 enum:
                   - Pedagogisk personal
                   - Övrig personal
                   - Elev
                   - Vårdnadshavare
-            required: 
+            required:
               - value
         norEduPersonNIN:
           type: object
@@ -86,31 +91,43 @@ Person:
           required:
             - value
         securityMarking:
-          type: boolean
-          default: false
+          type: string
+          title: Code_SecurityMarking
+          description: >
+            Återspeglar värdet från folkbokföringsregistret.
+          enum:
+            - Ingen
+            - Sekretessmarkering
+            - Skyddad folkbokföring
         personStatus:
           type: string
+          description: >
+            Anger ifall en person har en aktiv status eller en annan status,
+            såsom utvandrad eller avliden.
+          title: Code_PersonStatus
           enum:
-            - Normal
+            - Aktiv
             - Utvandrad
             - Avliden
-          default: Normal
+          default: Aktiv
         emails:
           type: array
           description: En lista med personens epostadresser
           items:
             type: object
+            title: Email
             properties:
               value:
                 type: string
                 format: email
               type:
                 type: string
+                title: Code_EmailType
                 enum:
-                  - Pedagogisk personal
-                  - Övrig personal
-                  - Elev
-                  - Vårdnadshavare
+                  - Privat
+                  - Skola elev
+                  - Skola personal
+                  - Arbete övrigt
             required:
               - value
         phoneNumbers:
@@ -120,12 +137,14 @@ Person:
             required:
               - number
             type: object
+            title: Phonenumber
             properties:
               value:
                 type: string
                 description: Telefonnumret.
               type:
                 type: string
+                title: Code_PhoneNumberType
                 enum:
                   - Hem
                   - Arbete
@@ -134,17 +153,19 @@ Person:
                 default: true
         addresses:
           type: array
-          description: Personens postadresser.
+          description: En lista med personens postadresser
           items:
             type: object
             properties:
               type:
                 type: string
-                default: Folkbokföringsadress
+                default: Folkbokföring
+                title: Code_AddressType
                 enum:
-                  - Folkbokföringsadress
-                  - Vistelseadress
+                  - Folkbokföring
                   - Särskildpostadress
+                  - Tillfälligadress
+                  - Postadress
               streetAddress:
                 type: string
                 description: Gatuadress.
@@ -166,39 +187,23 @@ Person:
               country:
                 type: string
                 description: Land.
-        photos:
-          type: array
-          description: Bild på personen.
-          items:
-            type: object
-            properties:
-              value:
-                type: string
-                format: uri
-                description: En länk där bildfilen kan hämtas.
-              type:
-                type: string
-                description: Typ av bild.
-                enum:
-                  - Photo
-                  - Thumbnail
+        photo:
+          type: string
+          format: uri
+          description: >
+            Pekar ut en resurs med en bild på personen,
+            specificeras som en URI enligt RFC 3986.
         enrolments:
           type: array
           description: En lista med inskrivningar för personen
           items:
             $ref: "Enrolment.yaml#/Enrolment"
-        placements:
+        responsibles:
           type: array
           description: >
-            En lista med placeringen för personen, 
-            används för förskoleverksamhet eller för placering på ex kulturskol
-          items:
-            $ref: "Placement.yaml#/Placement"
-        repsonsibleRelations:
-          type: array
-          description: > 
-            Personens vårdnadshavare eller motsvarande relationer så som familjehemsförälder.
-            Denna relation beskriver ett officiellt ansvarsförhållande.
+            Personens vårdnadshavare eller motsvarande relationer
+            så som familjehemsförälder. Denna relation beskriver
+            ett officiellt ansvarsförhållande.
           items:
             type: object
             properties:
@@ -206,71 +211,13 @@ Person:
                 type: string
                 format: uuid
                 description: >
-                  Ett objekt ska ha samma överförings-ID mellan samtliga ingående system och
-                  således är det ett enda namespace för de gemensamma ID:na.
-                  Objektidentifikatorn är den nyckel som skall vara persistent
-                  mellan olika processer (enl figur 1).
+                  Ett objekt ska ha samma överförings-ID mellan samtliga
+                  ingående system och således är det ett enda namespace
+                  för de gemensamma ID:na. Objektidentifikatorn är
+                  den nyckel som skall vara persistent mellan olika
+                  processer (enl figur 1).
               relationType:
-                type: string
-                enum:
-                  - Vårdnadshavare
-                  - God man
-                  - Familjehemsförälder
-        relations:
-          type: array 
-          description: >
-            Relaterade personer. 
-            Egenskapen går från en person till en annan, beskriver en relation och inte ett officiellt ansvar. 
-
-            - Agerande vårdnadshavare
-              Tilldelad relation för att delge information eller funktionalitet på liknande sätt som för den officiella vårdnadshavaren.
-            - Förälder
-              Biologiskförälder.
-            - Hämtare
-              Personen får hämta upp barnet från barnomsorgsverksamhet.
-            - Kontaktperson
-              Kontaktperson till kontakten.
-          items:
-            type: object
-            properties:
-              id:
-                type: string
-                format: uuid
-                description: >
-                  Ett objekt ska ha samma överförings-ID mellan samtliga ingående system och
-                  således är det ett enda namespace för de gemensamma ID:na.
-                  Objektidentifikatorn är den nyckel som skall vara persistent
-                  mellan olika processer (enl figur 1).
-              relationType:
-                type: string
-                enum:
-                  - Agerande vårdnadshavare
-                  - Förälder
-                  - Hämtare
-                  - Kontaktperson
-
-        association: 
-          type: array
-          description: >
-            Associerade personer utöver de vilka beskrivs med egenskaperna *relations* och *repsonsibleRelations*.
-            Egenskapen är utan riktining utan går alltid mellan två personer.
-          items:
-            type: object
-            properties:
-              id:
-                type: string
-                format: uuid
-                description: >
-                  Ett objekt ska ha samma överförings-ID mellan samtliga ingående system och
-                  således är det ett enda namespace för de gemensamma ID:na.
-                  Objektidentifikatorn är den nyckel som skall vara persistent
-                  mellan olika processer (enl figur 1).
-              relationType:
-                type: string
-                enum:
-                  - Make/Maka
-                  - Partner
-                  - Sambo
+                $ref: "common.yaml#/components/schemas/RelationTypesEnum"
 
 PersonExpanded:
   allOf:
@@ -283,7 +230,7 @@ PersonExpanded:
             responsibleFor:
               type: array
               description: >
-                De barn/barnen vilka personen har officiellt ansvar för.
+                De barn/barnen vilka personen har ansvar för.
               items:
                 type: object
                 properties:
@@ -291,51 +238,58 @@ PersonExpanded:
                     type: string
                     format: uuid
                     description: >
-                      Ett objekt ska ha samma överförings-ID mellan samtliga ingående system och
-                      således är det ett enda namespace för de gemensamma ID:na.
-                      Objektidentifikatorn är den nyckel som skall vara persistent
-                      mellan olika processer (enl figur 1).
+                      Ett objekt ska ha samma överförings-ID mellan samtliga
+                      ingående system och således är det ett enda namespace
+                      för de gemensamma ID:na. Objektidentifikatorn är den nyckel
+                      som skall vara persistent mellan olika processer (enl figur 1).
                   relationType:
-                    type: string
-                    enum:
-                      - Vårdnadshavare för
-                      - God man för
-                      - Familjehemsbarn
-            relationsTo:
-              type: array 
-              description: >
-                Relaterade personer. 
-                Egenskapen går från en person till en annan, beskriver en relation och inte ett officiellt ansvar. 
-              items:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    format: uuid
-                    description: >
-                      Ett objekt ska ha samma överförings-ID mellan samtliga ingående system och
-                      således är det ett enda namespace för de gemensamma ID:na.
-                      Objektidentifikatorn är den nyckel som skall vara persistent
-                      mellan olika processer (enl figur 1).
-                  relationType:
-                    type: string
-                    enum:
-                      - Agerande vårdnadshavare för
-                      - Barn
-                      - Hämtare för
-                      - Kontaktperson för
-            duties:
+                    $ref: "common.yaml#/components/schemas/RelationTypesEnum"
+            placements:
               type: array
-              description: Personens tjänster
+              description: >
+                En lista med placeringar för personen.
+              items:
+                $ref: "Placement.yaml#/Placement"
+            ownedPlacements:
+              type: array
+              description: >
+                En lista med placeringar där personen är satt som ägare.
+              items:
+                $ref: "Placement.yaml#/Placement"
+            duty:
+              type: array
+              description: Personens aktuella tjänstgöring
               items:
                 $ref: "./Duty.yaml#/DutyFragment"
+            studentGroups:
+              type: array
+              description: >
+                En lista med studengrupper där eleven är medlem i
+              items:
+                $ref: "./StudentGroup.yaml#/StudentGroupFragment"
 
 Persons:
   type: array
   items:
     $ref: "#/Person"
 
-PersonsExpanded:
+PersonsExpandedArray:
   type: array
   items:
     $ref: "#/PersonExpanded"
+
+PersonsExpanded:
+  type: object
+  properties:
+    data:
+      type: array
+      items:
+        $ref: "#/PersonExpanded"
+    pageToken:
+      type: string
+      nullable: true
+      description: >
+        Om värdet är null finns inget mer att hämta på det token
+        som skickades in som query parameter.
+  required:
+    - data
